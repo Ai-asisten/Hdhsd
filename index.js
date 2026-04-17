@@ -360,49 +360,47 @@ function updateCommandStats() {
     panel: []
   };
   
-  // Auto detect dari bot handlers
-  if (bot && bot.bot && bot.bot.handlers) {
-    // Loop semua command handler
-    for (const [key, handler] of Object.entries(bot.bot.handlers)) {
-      if (key.startsWith('command:')) {
-        const cmd = key.replace('command:', '');
-        
-        // Kategorikan berdasarkan pola
-        if (cmd.match(/^(start|info|ping|commands)$/)) {
-          commands.umum.push(cmd);
-        }
-        else if (cmd.match(/^(add|del)(own|prem|ress|tk|pt|ceo|pemilik)$/)) {
-          commands.owner.push(cmd);
-        }
-        else if (cmd.match(/^(addserver|listserver|delserver|delallserver|delsrvoff|clearoff|totalserver|listadmin|listsrv|delsrv|listusr|delusr|cekserver)$/)) {
-          commands.server.push(cmd);
-        }
-        else if (cmd.match(/^(cleanup|cekpenuh|setcleanup|refreshcmds)$/)) {
-          commands.cleanup.push(cmd);
-        }
-        else if (cmd.match(/^(cpa|cadp)$/)) {
-          commands.panel.push(cmd);
-        }
+// Auto detect dari bot handlers
+if (bot && bot.bot && bot.bot.handlers) {
+  // Loop semua command handler
+  for (const [key, handler] of Object.entries(bot.bot.handlers)) {
+    if (key.startsWith('command:')) {
+      const cmd = key.replace('command:', '');
+      
+      // Kategorikan berdasarkan pola
+      if (cmd.match(/^(start|info|ping|commands|id)$/)) {
+        commands.umum.push(cmd);
+      }
+      else if (cmd.match(/^(add|del)$/)) {  // ✅ UPDATE INI
+        commands.owner.push(cmd);
+      }
+      else if (cmd.match(/^(addserver|listserver|delserver|delallserver|delsrvoff|clearoff|totalserver|listadmin|listsrv|delsrv|listusr|delusr|cekserver)$/)) {
+        commands.server.push(cmd);
+      }
+      else if (cmd.match(/^(cleanup|cekpenuh|setcleanup|refreshcmds)$/)) {
+        commands.cleanup.push(cmd);
+      }
+      else if (cmd.match(/^(cpa|cadp)$/)) {
+        commands.panel.push(cmd);
       }
     }
   }
-  
-  // Fallback manual list kalo auto detect gagal
-  if (commands.umum.length === 0) {
-    commands.umum = ['start', 'info', 'ping', 'commands'];
-    commands.owner = [
-      'addown', 'delown', 'addprem', 'delprem', 'address', 'delress',
-      'addtk', 'deltk', 'addpt', 'delpt', 'addceo', 'delceo',
-      'addpemilik', 'delpemilik'
-    ];
-    commands.server = [
-      'addserver', 'listserver', 'delserver', 'delallserver',
-      'delsrvoff', 'clearoff', 'totalserver', 'listadmin',
-      'listsrv', 'delsrv', 'listusr', 'delusr', 'cekserver'
-    ];
-    commands.cleanup = ['cleanup', 'cekpenuh', 'setcleanup', 'refreshcmds'];
-    commands.panel = ['cpa', 'cadp'];
-  }
+}
+
+// Fallback manual list kalo auto detect gagal
+if (commands.umum.length === 0) {
+  commands.umum = ['start', 'info', 'ping', 'commands', 'id'];
+  commands.owner = [
+    'add', 'del'
+  ];
+  commands.server = [
+    'addserver', 'listserver', 'delserver', 'delallserver',
+    'delsrvoff', 'clearoff', 'totalserver', 'listadmin',
+    'listsrv', 'delsrv', 'listusr', 'delusr', 'cekserver'
+  ];
+  commands.cleanup = ['cleanup', 'cekpenuh', 'setcleanup', 'refreshcmds'];
+  commands.panel = ['cpa', 'cadp'];
+}
   
   // Hitung total
   const total = Object.values(commands).flat().length;
@@ -436,107 +434,113 @@ bot.start(async (ctx) => {
   const minutes = Math.floor((uptime % 3600) / 60);
   const seconds = Math.floor(uptime % 60);
   const runtime = `${hours} Jam ${minutes} Menit ${seconds} Detik`;
-  const osPlatform = os.platform();
-  const osArch = os.arch();
-  const cpuCores = os.cpus().length;
-  const totalRAM = (os.totalmem() / 1024 / 1024).toFixed(0);
-  const freeRAM = (os.freemem() / 1024 / 1024).toFixed(0);
-  const loadAvg = os.loadavg().map(avg => avg.toFixed(2)).join(', ');
-  const nodeVersion = process.version;
   const stats = updateCommandStats();
+  
+  // Cek role user
+  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
+  const premiumUsers = JSON.parse(fs.readFileSync(premiumUsersFile));
+  const ressUsers = JSON.parse(fs.readFileSync(ressFile));
+  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
+  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
+  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
+  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
+  
+  let userRole = 'User Gratisan Gak Modal🗿🤣';
+  if (userId.toString() === vsett.adminId) userRole = 'OWNER UTAMA';
+  else if (adminUsers.includes(userId.toString())) userRole = 'PEMILIK PANEL';
+  else if (ceoUsers.includes(userId.toString())) userRole = 'CEO PANEL';
+  else if (ptUsers.includes(userId.toString())) userRole = 'PT PANEL';
+  else if (ownerUsers.includes(userId.toString())) userRole = 'OWN PANEL';
+  else if (tkUsers.includes(userId.toString())) userRole = 'TANGAN KANAN';
+  else if (premiumUsers.includes(userId.toString())) userRole = 'PREMIUM';
+  else if (ressUsers.includes(userId.toString())) userRole = 'RESELLER';
+  
   const teksAwal = `
-╭━━━━━━━━━━━━━━━━━━╮
-┃   <b>${getGreeting()}</b>   
-┃   <b>👋 HALO, ${firstName}!</b>   
-╰━━━━━━━━━━━━━━━━━━╯
+<b>${getGreeting()}, ${firstName}!</b>
 
-<b>📋 USER INFORMATION</b>
-├─ Username : ${sender ? '@' + sender : '<i>Tidak ada</i>'}
+━━━━━━━━━━━━━━━━━━━━━━
+
+<b>📋 USER INFO</b>
+├─ Username : ${sender ? '@' + sender : '-'}
 ├─ ID : <code>${userId}</code>
-╰─ Nama : <b>${firstName}</b>
+╰─ Role : ${userRole}
 
-<b>🤖 BOT INFORMATION</b>
-├─ Nama : <b>Zyura Panel Bot</b>
-├─ Versi : <b>v1.0.0</b>
-├─ Runtime : <b>${runtime}</b>
-├─ Status : <b>🟢 Active</b>
-╰─ Total Fitur : <b>${stats.total} Fitur</b>
+<b>🤖 BOT INFO</b>
+├─ Nama : Zyura Panel Bot
+├─ Runtime : ${runtime}
+├─ Total Fitur : ${stats.total}
+╰─ Status : 🟢 Aktif
 
-┏━━━━━━━━━━━━━━━━━━┓
-┃  <b>/info</b> - Detail Info  
-┃  <b>/ping</b> - Cek Status Bot
-┃  <b>/id</b> - Cek Id Tele
-┗━━━━━━━━━━━━━━━━━━┛
+━━━━━━━━━━━━━━━━━━━━━━
 
-<b>⬇️ PILIH MENU DI BAWAH ⬇️</b>
+/info  - Detail user
+/ping  - Status bot
+/id    - Cek ID Telegram
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+<b>⬇️ PILIH MENU:</b>
 `;
-await ctx.replyWithPhoto(
-  { url: "https://files.catbox.moe/6kxqxn.jpg" },
-  {
-    caption: teksAwal,
-    parse_mode: 'HTML',
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: ' OWNER MENU',
-            callback_data: 'owner_menu',
-            style: 'primary',
-            icon_custom_emoji_id: '5301096984617166561'
-          },
-          {
-            text: ' CREATE PANEL',
-            callback_data: 'create_panel',
-            style: 'success',
-            icon_custom_emoji_id: '5310076249404621168'
-          }
-        ],
-        [
-          {
-            text: ' SERVER MENU',
-            callback_data: 'server_menu',
-            style: 'danger',
-            icon_custom_emoji_id: '5310169226856644648'
-          }
+
+  await ctx.replyWithPhoto(
+    { url: "https://files.catbox.moe/x8yq8b.png" },
+    {
+      caption: teksAwal,
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: 'OWNER MENU',
+              callback_data: 'owner_menu',
+              style: 'primary'
+            },
+            {
+              text: 'CREATE PANEL',
+              callback_data: 'create_panel',
+              style: 'success'
+            }
+          ],
+          [
+            {
+              text: 'SERVER MENU',
+              callback_data: 'server_menu',
+              style: 'danger'
+            }
+          ]
         ]
-      ]
+      }
     }
-  }
-);
+  );
+  
   const audioMsg = await ctx.replyWithAudio({
     url: "https://files.catbox.moe/gk5egu.mp3"
   });
   
-  lastAudioMessageId = audioMsg.message_id;  
+  lastAudioMessageId = audioMsg.message_id;
   console.log(`Audio ID baru: ${lastAudioMessageId}`);
-  
 });
 bot.action('owner_menu', async (ctx) => {
     const chatId = ctx.chat.id;
-  const text = `
-<blockquote>┏━━━━━━━━━━━━━━━━━━┓
-┃ <b>🔰 MENU OWNER</b>
-┣━━━━━━━━━━━━━━━━━━┛
-┣ /addown - Add owner (reply)
-┣ /delown - Delete owner (reply)
-┣ /addprem - Add premium (reply)
-┣ /delprem - Delete premium (reply)
-┣ /delress - Delete reseller (reply)
-┣ /addtk - Add tangan kanan (reply)
-┣ /deltk - Delete tangan kanan (reply)
-┣ /addpt - Add PT panel (reply)
-┣ /delpt - Delete PT panel (reply)
-┣ /addceo - Add Ceo Panel (reply)
-┣ /delceo - Delete Ceo Panel (reply)
-┣ /addpemilik - Add Pemilik panel (reply)
-┗ /delpemilik - Delete Pemilik panel (reply)
+  const text = `<blockquote>╭━━━━━━━━━━━━━━━━━━━━━━╮
+┃     <b>🔰 OWNER MENU</b>      
+├──────────────────────┤
+│  /add  - Tambah role
+│  /del  - Hapus role 
+└──────────────────────┘
+
+┌──────────────────────┐
+│ <b>🎭 ROLE TERSEDIA</b>     
+├──────────────────────┤
+│  OWNER             
+│  PREMIUM           
+│  RESELLER          
+│  TANGAN KANAN      
+│  PT PANEL          
+│  CEO PANEL         
+│  PEMILIK PANEL     
+└──────────────────────┘
 </blockquote>
-
-<b>━━━━━━━━━━━━━━━━━━━━</b>
-<b>📌 CATATAN: Gunakan perintah dengan reply ke user</b>
-<b>━━━━━━━━━━━━━━━━━━━━</b>
-
-<b>⬇️ PILIH MENU DI BAWAH ⬇️</b>
   `;
   await ctx.deleteMessage();
 
@@ -570,26 +574,25 @@ bot.action('owner_menu', async (ctx) => {
 bot.action('server_menu', async (ctx) => {
     const chatId = ctx.chat.id;
   const text = `
-<blockquote>┏━━━━━━━━━━━━━━━━━━┓
-┃ <b>🖥️ SERVER MENU</b>
-┣━━━━━━━━━━━━━━━━━━┛
-┣ /listsrv - List Server Panel (Owner Only)
-┣ /listusr - List User Panel (Owner Only)
-┣ /listadmin - List Admin Panel (Owner Only)
-┣ /totalserver - Total Server Panel
-┣ /delsrv - Delete Server Panel (Owner Only)
-┣ /delusr - Delete User Panel (Owner Only)
-┣ /delsrvoff - Delete Server Offline (Owner Only)
-┣ /cekpenuh - Cek disk server (Supaya anti kilPanel)
-┣ /setcleanup - Sett Auto Clear Disk Penu
-┣ /cleanup - Clear Server Penu Disk
-┗ /clearoff - Delete All User & Server Offline (Owner Only)
-</blockquote>
-<b>━━━━━━━━━━━━━━━━━━━━</b>
-<b>⚠️ PERHATIAN: Perintah Owner Only akan muncul jika Anda adalah Owner</b>
-<b>━━━━━━━━━━━━━━━━━━━━</b>
+<blockquote><b>🖥️ SERVER MENU</b>
+━━━━━━━━━━━━━━━━━━━━
 
-<b>⬇️ PILIH MENU DI BAWAH ⬇️</b>
+/listsrv   - List semua server
+/listusr   - List semua user
+/listadmin - List admin panel
+/totalserver - Total semua server
+/delsrv     - Hapus server by ID
+/delusr     - Hapus user by ID
+/delsrvoff  - Hapus server offline
+/clearoff   - Hapus semua user & server offline
+/cekpenuh   - Cek server penuh
+/cleanup    - Hapus server penuh (RAM/Disk)
+/setcleanup - Atur auto cleanup
+
+━━━━━━━━━━━━━━━━━━━━
+</blockquote>
+
+<b>⚠️ Perintah tertentu khusus Owner</b>
   `;
   await ctx.deleteMessage();
 
@@ -639,8 +642,6 @@ bot.action('create_panel', async (ctx) => {
 ┣━━━━━━━━━━━━━━━━━━┛
 ┗ /cadp - Create Admin Panel
 </blockquote>
-
-<b>⬇️ PILIH MENU DI BAWAH ⬇️</b>
   `;
   await ctx.deleteMessage();
 
@@ -738,6 +739,7 @@ bot.action('usage_info', async (ctx) => {
   
   await ctx.answerCbQuery();
 });
+
 bot.action('back_to_start', async (ctx) => {
   const sender = ctx.from.username || 'tanpa_username';
   const userId = ctx.from.id;
@@ -747,82 +749,93 @@ bot.action('back_to_start', async (ctx) => {
   const minutes = Math.floor((uptime % 3600) / 60);
   const seconds = Math.floor(uptime % 60);
   const runtime = `${hours} Jam ${minutes} Menit ${seconds} Detik`;
-  const osPlatform = os.platform();
-  const osArch = os.arch();
-  const cpuCores = os.cpus().length;
-  const totalRAM = (os.totalmem() / 1024 / 1024).toFixed(0);
-  const freeRAM = (os.freemem() / 1024 / 1024).toFixed(0);
-  const loadAvg = os.loadavg().map(avg => avg.toFixed(2)).join(', ');
-  const nodeVersion = process.version;
   const stats = updateCommandStats();
+  
+  // Cek role user
+  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
+  const premiumUsers = JSON.parse(fs.readFileSync(premiumUsersFile));
+  const ressUsers = JSON.parse(fs.readFileSync(ressFile));
+  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
+  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
+  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
+  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
+  
+  let userRole = 'User';
+  if (userId.toString() === vsett.adminId) userRole = 'OWNER UTAMA';
+  else if (adminUsers.includes(userId.toString())) userRole = 'PEMILIK PANEL';
+  else if (ceoUsers.includes(userId.toString())) userRole = 'CEO PANEL';
+  else if (ptUsers.includes(userId.toString())) userRole = 'PT PANEL';
+  else if (ownerUsers.includes(userId.toString())) userRole = 'OWN PANEL';
+  else if (tkUsers.includes(userId.toString())) userRole = 'TANGAN KANAN';
+  else if (premiumUsers.includes(userId.toString())) userRole = 'PREMIUM';
+  else if (ressUsers.includes(userId.toString())) userRole = 'RESELLER';
+  
   const teksAwal = `
-╭━━━━━━━━━━━━━━━━━━╮
-┃   <b>${getGreeting()}</b>   
-┃   <b>👋 HALO, ${firstName}!</b>   
-╰━━━━━━━━━━━━━━━━━━╯
+<b>${getGreeting()}, ${firstName}!</b>
 
-<b>📋 USER INFORMATION</b>
-├─ Username : ${sender ? '@' + sender : '<i>Tidak ada</i>'}
+━━━━━━━━━━━━━━━━━━━━━━
+
+<b>📋 USER INFO</b>
+├─ Username : ${sender ? '@' + sender : '-'}
 ├─ ID : <code>${userId}</code>
-╰─ Nama : <b>${firstName}</b>
+╰─ Role : ${userRole}
 
-<b>🤖 BOT INFORMATION</b>
-├─ Nama : <b>Zyura Panel Bot</b>
-├─ Versi : <b>v1.0.0</b>
-├─ Runtime : <b>${runtime}</b>
-├─ Status : <b>🟢 Active</b>
-╰─ Total Fitur : <b>${stats.total} Fitur</b>
+<b>🤖 BOT INFO</b>
+├─ Nama : Zyura Panel Bot
+├─ Runtime : ${runtime}
+├─ Total Fitur : ${stats.total}
+╰─ Status : 🟢 Aktif
 
-┏━━━━━━━━━━━━━━━━━━┓
-┃  <b>/info</b> - Detail Info  
-┃  <b>/ping</b> - Cek Status Bot
-┗━━━━━━━━━━━━━━━━━━┛
+━━━━━━━━━━━━━━━━━━━━━━
 
-<b>⬇️ PILIH MENU DI BAWAH ⬇️</b>
+/info  - Detail user
+/ping  - Status bot
+/id    - Cek ID Telegram
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+<b>⬇️ PILIH MENU:</b>
 `;
-await ctx.deleteMessage();
-await ctx.replyWithPhoto(
-  { url: "https://files.catbox.moe/6kxqxn.jpg" },
-  {
-    caption: teksAwal,
-    parse_mode: 'HTML',
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: ' OWNER MENU',
-            callback_data: 'owner_menu',
-            style: 'primary',
-            icon_custom_emoji_id: '5301096984617166561'
-          },
-          {
-            text: ' CREATE PANEL',
-            callback_data: 'create_panel',
-            style: 'success',
-            icon_custom_emoji_id: '5310076249404621168'
-          }
-        ],
-        [
-          {
-            text: ' SERVER MENU',
-            callback_data: 'server_menu',
-            style: 'danger',
-            icon_custom_emoji_id: '5310169226856644648'
-          }
+
+  await ctx.deleteMessage();
+  await ctx.replyWithPhoto(
+    { url: "https://files.catbox.moe/6kxqxn.jpg" },
+    {
+      caption: teksAwal,
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: 'OWNER MENU',
+              callback_data: 'owner_menu',
+              style: 'primary'
+            },
+            {
+              text: 'CREATE PANEL',
+              callback_data: 'create_panel',
+              style: 'success'
+            }
+          ],
+          [
+            {
+              text: 'SERVER MENU',
+              callback_data: 'server_menu',
+              style: 'danger'
+            }
+          ]
         ]
-      ]
+      }
     }
-  }
-);
+  );
+  
   const audioMsg = await ctx.replyWithAudio({
     url: "https://files.catbox.moe/gk5egu.mp3"
   });
   
   lastAudioMessageId = audioMsg.message_id;
   console.log(`Audio ID baru: ${lastAudioMessageId}`);
-  
 });
-
 // ========== COMMAND: CLEANUP (MANUAL) ==========
 bot.command('cleanup', async (ctx) => {
   const fromId = ctx.from.id.toString();
@@ -1345,58 +1358,11 @@ const msgText = `
     reply_to_message_id: msgId
   });
 });
-bot.command('addown', async (ctx) => {
+// ========== COMMAND ADD (TAMBAH ROLE) ==========
+bot.command('add', async (ctx) => {
   const fromId = ctx.from.id.toString();
 
-  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
-  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-
-  const hasAccess = 
-    ownerUsers.includes(String(fromId)) ||
-    tkUsers.includes(String(fromId)) ||
-    ceoUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId; 
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura' )
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('❌ Reply pesan orang yang mau dijadikan owner!');
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let ownerUsersList = JSON.parse(fs.readFileSync(ownerFile));
-
-  if (ownerUsersList.includes(targetId)) {
-    return ctx.reply(`⚠️ @${targetName} sudah menjadi owner.`);
-  }
-
-  ownerUsersList.push(targetId);
-  fs.writeFileSync(ownerFile, JSON.stringify(ownerUsersList, null, 2));
-
-  // UBAH INI KE HTML
-  ctx.replyWithHTML(`
-<blockquote><b>✅ BERHASIL!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Role:</b> Own Panel</blockquote>
-`);
-});
-
-bot.command('delown', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-
+  // CEK AKSES (siapa aja yang bisa pake /add)
   const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
   const tkUsers = JSON.parse(fs.readFileSync(tkFile));
   const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
@@ -1407,411 +1373,213 @@ bot.command('delown', async (ctx) => {
     tkUsers.includes(String(fromId)) ||
     ceoUsers.includes(String(fromId)) ||
     adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId; 
+    fromId === vsett.adminId;
 
   if (!hasAccess) {
     return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
       ])
     });
   }
 
-  const isOwnerUser = ownerUsers.includes(String(fromId)) || fromId === vsett.adminId;
+  // CEK APAKAH ADA REPLY
+  if (!ctx.message.reply_to_message) {
+    return ctx.reply(`
+<blockquote><b>❌ CARA PAKAI /add</b>
+Reply pesan user yang mau dikasih role, lalu ketik:
+<code>/add</code></blockquote>
+`, { parse_mode: 'HTML' });
+  }
+
+  const targetId = ctx.message.reply_to_message.from.id.toString();
+  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
+  const tempId = generateTempId();
+
+  // SIMPAN SEMENTARA
+  tempStorage.set(tempId, {
+    type: 'add_role',
+    targetId: targetId,
+    targetName: targetName,
+    userId: fromId
+  });
+
+  setTimeout(() => {
+    tempStorage.delete(tempId);
+  }, 2 * 60 * 1000);
+
+  const msg = await ctx.reply(`<blockquote>╭━━━━━━━━━━━━━━━━━━━━╮
+┃    <b>TAMBAH ROLE</b>    ┃
+╰━━━━━━━━━━━━━━━━━━━━╯
+
+<b>📌 TARGET USER</b>
+├─ 👤 Username : @${targetName}
+╰─ 🆔 User ID   : <code>${targetId}</code>
+
+<b>🎯 SILAHKAN PILIH ROLE</b>
+╰─ Tekan tombol di bawah ini
+</blockquote>
+`, {
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: 'OWN PANEL', callback_data: `add_role_${tempId}_owner`, style: 'primary' },
+          { text: 'PREMIUM', callback_data: `add_role_${tempId}_premium`, style: 'primary' }
+        ],
+        [
+          { text: 'RESELLER PANEL', callback_data: `add_role_${tempId}_reseller`, style: 'primary' },
+          { text: 'TK PANEL', callback_data: `add_role_${tempId}_tk`, style: 'success' }
+        ],
+        [
+          { text: 'PT PANEL', callback_data: `add_role_${tempId}_pt`, style: 'success' },
+          { text: 'CEO PANEL', callback_data: `add_role_${tempId}_ceo`, style: 'success' }
+        ],
+        [
+          { text: 'PEMILIK PANEL', callback_data: `add_role_${tempId}_pemilik`, style: 'primary' }
+        ],
+        [
+          { text: '❌ BATAL', callback_data: `cancel_add_${tempId}`, style: 'danger' }
+        ]
+      ]
+    }
+  });
+
+  // SIMPAN messageId biar bisa dihapus nanti
+  const data = tempStorage.get(tempId);
+  if (data) {
+    data.messageId = msg.message_id;
+    data.chatId = ctx.chat.id;
+    tempStorage.set(tempId, data);
+  }
+});
+
+// ========== HANDLE ADD ROLE ==========
+bot.action(/^add_role_(.+)_(.+)$/, async (ctx) => {
+  const tempId = ctx.match[1];
+  const role = ctx.match[2];
+  const userId = ctx.from.id.toString();
+  const chatId = ctx.chat.id;
+
+  const data = tempStorage.get(tempId);
   
-  if (!isOwnerUser) {
-    return ctx.reply('❌ Yang bisa hapus owner hanya sesama owner!');
+  if (!data || data.type !== 'add_role') {
+    await ctx.answerCbQuery('❌ Session expired!', { alert: true });
+    return;
   }
 
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('❌ Reply pesan orang yang mau dihapus dari owner!');
+  if (data.userId !== userId) {
+    await ctx.answerCbQuery('❌ Bukan session kamu!', { alert: true });
+    return;
   }
 
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let ownerUsersList = JSON.parse(fs.readFileSync(ownerFile));
-
-  if (!ownerUsersList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} bukan owner.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  ownerUsersList = ownerUsersList.filter(id => id !== targetId);
-  fs.writeFileSync(ownerFile, JSON.stringify(ownerUsersList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DIHAPUS!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Status:</b> Dihapus dari Own Panel</blockquote>
-  `);
-});
-
-bot.command('addprem', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-
-  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
-  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
-  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-
-  const hasAccess = 
-    ownerUsers.includes(String(fromId)) ||
-    tkUsers.includes(String(fromId)) ||
-    ptUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    ceoUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dijadikan premium!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let premiumList = JSON.parse(fs.readFileSync(premiumUsersFile));
-
-  if (premiumList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} sudah premium.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  premiumList.push(targetId);
-  fs.writeFileSync(premiumUsersFile, JSON.stringify(premiumList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DITAMBAHKAN!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Role:</b> PREMIUM</blockquote>
-  `);
+  const { targetId, targetName, messageId } = data;
   
-  ctx.telegram.sendMessage(targetId, 
-    `<blockquote>🎉 <b>Selamat!</b> Kamu sekarang <b>USER PREMIUM</b>.\n\nGunakan /listcpanel untuk melihat panel.</blockquote>`, 
-    { parse_mode: 'HTML' }
-  );
+  // ✅ HAPUS PESAN TOMBOL
+  try {
+    await ctx.telegram.deleteMessage(chatId, messageId);
+  } catch (err) {
+    console.log('Gagal hapus pesan tombol add:', err.message);
+  }
+  
+  tempStorage.delete(tempId);
+
+  // MAP role ke file dan nama display
+  const roleMap = {
+    owner: { file: ownerFile, display: 'OWN PANEL', listName: 'ownerUsers' },
+    premium: { file: premiumUsersFile, display: 'PREMIUM', listName: 'premiumList' },
+    reseller: { file: ressFile, display: 'RESELLER PANEL', listName: 'ressList' },
+    tk: { file: tkFile, display: 'TK PANEL', listName: 'tkList' },
+    pt: { file: ptFile, display: 'PT PANEL', listName: 'ptList' },
+    ceo: { file: ceoFile, display: 'CEO PANEL', listName: 'ceoList' },
+    pemilik: { file: adminfile, display: 'PEMILIK PANEL', listName: 'adminList' }
+  };
+
+  const roleInfo = roleMap[role];
+  if (!roleInfo) {
+    return ctx.reply('❌ Role tidak dikenal!');
+  }
+
+  let list = JSON.parse(fs.readFileSync(roleInfo.file));
+
+  if (list.includes(targetId)) {
+    return ctx.reply(`<blockquote>⚠️ @${targetName} sudah memiliki role ${roleInfo.display}.</blockquote>`, { parse_mode: 'HTML' });
+  }
+
+  list.push(targetId);
+  fs.writeFileSync(roleInfo.file, JSON.stringify(list, null, 2));
+
+  await ctx.replyWithHTML(`
+<blockquote><b>✅ Berhasil ditambahin!</b>
+
+@${targetName} sekarang punya role ${roleInfo.display}
+ID: <code>${targetId}</code>
+</blockquote>
+  `);
+
+  // Kirim notifikasi ke user yang ditambahi
+try {
+  await ctx.telegram.sendMessage(vsett.adminId, `
+<blockquote>
+<b>📢 NOTIFIKASI TAMBAH ROLE</b>
+
+👤 User: @${targetName}
+🆔 ID: <code>${targetId}</code>
+🎭 Role: <b>${roleInfo.display}</b>
+
+━━━━━━━━━━━━━━━━━━━━
+Status: ✅ Berhasil ditambahkan
+</blockquote>
+`, { parse_mode: 'HTML' });
+} catch (err) {
+  console.log('Gagal kirim notifikasi ke owner:', err.message);
+}
+
+  await ctx.answerCbQuery();
 });
 
-bot.command('delprem', async (ctx) => {
+// ========== HANDLE BATAL ADD ==========
+bot.action(/^cancel_add_(.+)$/, async (ctx) => {
+  const tempId = ctx.match[1];
+  const userId = ctx.from.id.toString();
+  const chatId = ctx.chat.id;
+
+  const data = tempStorage.get(tempId);
+  
+  if (data && data.userId === userId) {
+    // ✅ HAPUS PESAN TOMBOL
+    try {
+      await ctx.telegram.deleteMessage(chatId, data.messageId);
+    } catch (err) {
+      console.log('Gagal hapus pesan tombol cancel add:', err.message);
+    }
+    
+    tempStorage.delete(tempId);
+    await ctx.reply('<blockquote>❌ Penambahan role dibatalkan.</blockquote>', { parse_mode: 'HTML' });
+  }
+  
+  await ctx.answerCbQuery();
+});
+
+// ========== COMMAND DEL (HAPUS ROLE) ==========
+bot.command('del', async (ctx) => {
   const fromId = ctx.from.id.toString();
 
+  // CEK AKSES
   const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
   const tkUsers = JSON.parse(fs.readFileSync(tkFile));
-  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-
-  const hasAccess = 
-    ownerUsers.includes(String(fromId)) ||
-    tkUsers.includes(String(fromId)) ||
-    ceoUsers.includes(String(fromId)) ||
-    ptUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dihapus dari premium!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let premiumList = JSON.parse(fs.readFileSync(premiumUsersFile));
-
-  if (!premiumList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} bukan premium.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  premiumList = premiumList.filter(id => id !== targetId);
-  fs.writeFileSync(premiumUsersFile, JSON.stringify(premiumList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DIHAPUS!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Status:</b> Dihapus dari PREMIUM</blockquote>
-  `);
-});
-
-bot.command('address', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-
-  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
-  const premiumUsers = JSON.parse(fs.readFileSync(premiumUsersFile));
-  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
-  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-
-  const hasAccess = 
-    ownerUsers.includes(String(fromId)) ||
-    premiumUsers.includes(String(fromId)) ||
-    ceoUsers.includes(String(fromId)) ||
-    tkUsers.includes(String(fromId)) ||
-    ptUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dijadikan reseller!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let ressList = JSON.parse(fs.readFileSync(ressFile));
-
-  if (ressList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} sudah reseller.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  ressList.push(targetId);
-  fs.writeFileSync(ressFile, JSON.stringify(ressList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DITAMBAHKAN!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Role:</b> Reseller Panel</blockquote>
-  `);
-});
-
-bot.command('delress', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-
-  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
-  const premiumUsers = JSON.parse(fs.readFileSync(premiumUsersFile));
-  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
-  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-
-  const hasAccess = 
-    ownerUsers.includes(String(fromId)) ||
-    premiumUsers.includes(String(fromId)) ||
-    tkUsers.includes(String(fromId)) ||
-    ptUsers.includes(String(fromId)) ||
-    ceoUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dihapus dari reseller!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let ressList = JSON.parse(fs.readFileSync(ressFile));
-
-  if (!ressList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} bukan reseller.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  ressList = ressList.filter(id => id !== targetId);
-  fs.writeFileSync(ressFile, JSON.stringify(ressList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DIHAPUS!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Status:</b> Dihapus dari RESELLER</blockquote>
-  `);
-
-});
-bot.command('addtk', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-
-  const hasAccess = 
-    ceoUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dikasih TANGAN KANAN!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let tkList = JSON.parse(fs.readFileSync(tkFile));
-
-  if (tkList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} sudah menjadi TANGAN KANAN.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  tkList.push(targetId);
-  fs.writeFileSync(tkFile, JSON.stringify(tkList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DITAMBAHKAN!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Role:</b> TANGAN KANAN</blockquote>
-  `);
-});
-
-bot.command('deltk', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-
-  const hasAccess = 
-    ceoUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dihapus dari TANGAN KANAN!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let tkList = JSON.parse(fs.readFileSync(tkFile));
-
-  if (!tkList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} bukan TANGAN KANAN.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  tkList = tkList.filter(id => id !== targetId);
-  fs.writeFileSync(tkFile, JSON.stringify(tkList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DIHAPUS!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Status:</b> Dihapus dari TANGAN KANAN</blockquote>
-  `);
-
-});
-
-bot.command('addpt', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
-  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
-  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-  const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
-
-  const hasAccess = 
-    ownerUsers.includes(String(fromId)) ||
-    tkUsers.includes(String(fromId)) ||
-    ptUsers.includes(String(fromId)) ||
-    ceoUsers.includes(String(fromId)) ||
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dikasih PT PANEL!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let ptList = JSON.parse(fs.readFileSync(ptFile));
-
-  if (ptList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} sudah pernah dapat PT PANEL.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  ptList.push(targetId);
-  fs.writeFileSync(ptFile, JSON.stringify(ptList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DITAMBAHKAN!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Role:</b> PT PANEL</blockquote>
-  `);
-});
-
-bot.command('delpt', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-  const ownerUsers = JSON.parse(fs.readFileSync(ownerFile));
-  const tkUsers = JSON.parse(fs.readFileSync(tkFile));
-  const ptUsers = JSON.parse(fs.readFileSync(ptFile));
   const ceoUsers = JSON.parse(fs.readFileSync(ceoFile));
   const adminUsers = JSON.parse(fs.readFileSync(adminfile));
 
   const hasAccess = 
     ownerUsers.includes(String(fromId)) ||
     tkUsers.includes(String(fromId)) ||
-    ptUsers.includes(String(fromId)) ||
     ceoUsers.includes(String(fromId)) ||
     adminUsers.includes(String(fromId)) ||
     fromId === vsett.adminId;
 
   if (!hasAccess) {
     return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
       ])
@@ -1819,186 +1587,168 @@ bot.command('delpt', async (ctx) => {
   }
 
   if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dihapus PT PANEL!</blockquote>', { parse_mode: 'HTML' });
+    return ctx.reply(`
+<blockquote><b>❌ CARA PAKAI /del</b>
+Reply pesan user yang mau dihapus role-nya, lalu ketik:
+<code>/del</code></blockquote>
+`, { parse_mode: 'HTML' });
   }
 
   const targetId = ctx.message.reply_to_message.from.id.toString();
   const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
+  const tempId = generateTempId();
 
-  let ptList = JSON.parse(fs.readFileSync(ptFile));
+  // CEK ROLE APA AJA YANG DIMILIKI USER INI
+  const ownerList = JSON.parse(fs.readFileSync(ownerFile));
+  const premiumList = JSON.parse(fs.readFileSync(premiumUsersFile));
+  const ressList = JSON.parse(fs.readFileSync(ressFile));
+  const tkList = JSON.parse(fs.readFileSync(tkFile));
+  const ptList = JSON.parse(fs.readFileSync(ptFile));
+  const ceoList = JSON.parse(fs.readFileSync(ceoFile));
+  const adminList = JSON.parse(fs.readFileSync(adminfile));
 
-  if (!ptList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} tidak punya PT PANEL.</blockquote>`, { parse_mode: 'HTML' });
+  const userRoles = [];
+  
+  if (ownerList.includes(targetId)) userRoles.push({ key: 'owner', display: 'OWN PANEL', file: ownerFile });
+  if (premiumList.includes(targetId)) userRoles.push({ key: 'premium', display: 'PREMIUM', file: premiumUsersFile });
+  if (ressList.includes(targetId)) userRoles.push({ key: 'reseller', display: 'RESELLER PANEL', file: ressFile });
+  if (tkList.includes(targetId)) userRoles.push({ key: 'tk', display: 'TK PANEL', file: tkFile });
+  if (ptList.includes(targetId)) userRoles.push({ key: 'pt', display: 'PT PANEL', file: ptFile });
+  if (ceoList.includes(targetId)) userRoles.push({ key: 'ceo', display: 'CEO PANEL', file: ceoFile });
+  if (adminList.includes(targetId)) userRoles.push({ key: 'pemilik', display: 'PEMILIK PANEL', file: adminfile });
+
+  if (userRoles.length === 0) {
+    return ctx.reply(`<blockquote>⚠️ @${targetName} tidak memiliki role apapun.</blockquote>`, { parse_mode: 'HTML' });
   }
 
-  ptList = ptList.filter(id => id !== targetId);
-  fs.writeFileSync(ptFile, JSON.stringify(ptList, null, 2));
+  // SIMPAN SEMENTARA
+  tempStorage.set(tempId, {
+    type: 'del_role',
+    targetId: targetId,
+    targetName: targetName,
+    userRoles: userRoles,
+    userId: fromId
+  });
 
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DIHAPUS!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Status:</b> Dihapus dari PT PANEL</blockquote>
-  `);
+  setTimeout(() => {
+    tempStorage.delete(tempId);
+  }, 2 * 60 * 1000);
 
-});
-bot.command('addceo', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
+const roleButtons = [];
+for (const role of userRoles) {
+  roleButtons.push([{ text: `🗑️ ${role.display}`, callback_data: `del_role_${tempId}_${role.key}`, style: 'primary' }]);
+}
+roleButtons.push([{ text: '❌ BATAL', callback_data: `cancel_del_${tempId}`, style: 'danger' }]);
 
-  const hasAccess = 
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
+  const msg = await ctx.reply(`<blockquote><b>🗑️ Hapus Role</b>
 
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
+• @${targetName}
+• <code>${targetId}</code>
+
+Role yang dimiliki:</blockquote>
+`, {
+    parse_mode: 'HTML',
+    reply_markup: { inline_keyboard: roleButtons }
+  });
+
+  // SIMPAN messageId
+  const data = tempStorage.get(tempId);
+  if (data) {
+    data.messageId = msg.message_id;
+    data.chatId = ctx.chat.id;
+    tempStorage.set(tempId, data);
   }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dikasih CEO PANEL!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let ceoList = JSON.parse(fs.readFileSync(ceoFile));
-
-  if (ceoList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} sudah pernah dapat PT PANEL.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  ceoList.push(targetId);
-  fs.writeFileSync(ceoFile, JSON.stringify(ceoList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DITAMBAHKAN!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Role:</b> CEO PANEL</blockquote>
-  `);
-});
-
-bot.command('delceo', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-  const adminUsers = JSON.parse(fs.readFileSync(adminfile));
-  const hasAccess = 
-    adminUsers.includes(String(fromId)) ||
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
-  }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dihapus CEO PANEL!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let ceoList = JSON.parse(fs.readFileSync(ceoFile));
-
-  if (!ceoList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} tidak punya CEO PANEL.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  ceoList = ceoList.filter(id => id !== targetId);
-  fs.writeFileSync(ceoFile, JSON.stringify(ceoList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DIHAPUS!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Status:</b> Dihapus dari CEO PANEL</blockquote>
-  `);
 });
 
-bot.command('addpemilik', async (ctx) => {
-  const fromId = ctx.from.id.toString();
+// ========== HANDLE DEL ROLE ==========
+bot.action(/^del_role_(.+)_(.+)$/, async (ctx) => {
+  const tempId = ctx.match[1];
+  const roleKey = ctx.match[2];
+  const userId = ctx.from.id.toString();
+  const chatId = ctx.chat.id;
 
-  const hasAccess = 
-    fromId === vsett.adminId;
-
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
+  const data = tempStorage.get(tempId);
+  
+  if (!data || data.type !== 'del_role') {
+    await ctx.answerCbQuery('❌ Session expired!', { alert: true });
+    return;
   }
 
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dikasih PEMILIK PANEL!</blockquote>', { parse_mode: 'HTML' });
+  if (data.userId !== userId) {
+    await ctx.answerCbQuery('❌ Bukan session kamu!', { alert: true });
+    return;
   }
 
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let adminList = JSON.parse(fs.readFileSync(adminfile));
-
-  if (adminList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} sudah pernah dapat PEMILIK PANEL.</blockquote>`, { parse_mode: 'HTML' });
+  const { targetId, targetName, userRoles, messageId } = data;
+  
+  const roleToDelete = userRoles.find(r => r.key === roleKey);
+  if (!roleToDelete) {
+    await ctx.answerCbQuery('❌ Role tidak ditemukan!', { alert: true });
+    return;
   }
 
-  adminList.push(targetId);
-  fs.writeFileSync(adminfile, JSON.stringify(adminList, null, 2));
+  // ✅ HAPUS PESAN TOMBOL
+  try {
+    await ctx.telegram.deleteMessage(chatId, messageId);
+  } catch (err) {
+    console.log('Gagal hapus pesan tombol del:', err.message);
+  }
 
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DITAMBAHKAN!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Role:</b> PEMILIK PANEL</blockquote>
+  tempStorage.delete(tempId);
+
+  let list = JSON.parse(fs.readFileSync(roleToDelete.file));
+  list = list.filter(id => id !== targetId);
+  fs.writeFileSync(roleToDelete.file, JSON.stringify(list, null, 2));
+
+  await ctx.replyWithHTML(`<blockquote><b>✅ Berhasil dihapus!</b>
+
+User @${targetName}
+ID <code>${targetId}</code>
+
+Role ${roleToDelete.display} udah dihapus.
+</blockquote>
   `);
+
+try {
+  await ctx.telegram.sendMessage(vsett.adminId, `
+<blockquote>
+<b>📢 NOTIFIKASI HAPUS ROLE</b>
+
+👤 User: @${targetName}
+🆔 ID: <code>${targetId}</code>
+🎭 Role: <b>${roleToDelete.display}</b>
+
+━━━━━━━━━━━━━━━━━━━━
+Status: ❌ Berhasil dihapus
+</blockquote>
+`, { parse_mode: 'HTML' });
+} catch (err) {
+  console.log('Gagal kirim notifikasi ke owner:', err.message);
+}
+  await ctx.answerCbQuery();
 });
 
-bot.command('delpemilik', async (ctx) => {
-  const fromId = ctx.from.id.toString();
-  const hasAccess = 
-    fromId === vsett.adminId;
+// ========== HANDLE BATAL DEL ==========
+bot.action(/^cancel_del_(.+)$/, async (ctx) => {
+  const tempId = ctx.match[1];
+  const userId = ctx.from.id.toString();
+  const chatId = ctx.chat.id;
 
-  if (!hasAccess) {
-    return ctx.reply('❌ Khusus member public Zyura kak ☺️', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.url('ʟᴀᴘᴏʀᴀɴ', 'https://t.me/akuzyura')
-      ])
-    });
+  const data = tempStorage.get(tempId);
+  
+  if (data && data.userId === userId) {
+    // ✅ HAPUS PESAN TOMBOL
+    try {
+      await ctx.telegram.deleteMessage(chatId, data.messageId);
+    } catch (err) {
+      console.log('Gagal hapus pesan tombol cancel del:', err.message);
+    }
+    
+    tempStorage.delete(tempId);
+    await ctx.reply('<blockquote>❌ Penghapusan role dibatalkan.</blockquote>', { parse_mode: 'HTML' });
   }
-
-  if (!ctx.message.reply_to_message) {
-    return ctx.reply('<blockquote>❌ Reply pesan orang yang mau dihapus PEMILIK PANEL!</blockquote>', { parse_mode: 'HTML' });
-  }
-
-  const targetId = ctx.message.reply_to_message.from.id.toString();
-  const targetName = ctx.message.reply_to_message.from.username || 'tanpa username';
-
-  let adminList = JSON.parse(fs.readFileSync(adminfile));
-
-  if (!adminList.includes(targetId)) {
-    return ctx.reply(`<blockquote>⚠️ @${targetName} tidak punya PEMILIK PANEL.</blockquote>`, { parse_mode: 'HTML' });
-  }
-
-  adminList = adminList.filter(id => id !== targetId);
-  fs.writeFileSync(adminfile, JSON.stringify(adminList, null, 2));
-
-  ctx.replyWithHTML(`
-<blockquote>✅ <b>BERHASIL DIHAPUS!</b></blockquote>
-<blockquote>👤 <b>Username:</b> @${targetName}
-🆔 <b>ID:</b> <code>${targetId}</code>
-📌 <b>Status:</b> Dihapus dari PEMILIK PANEL</blockquote>
-  `);
-
+  
+  await ctx.answerCbQuery();
 });
 bot.command('info', async (ctx) => {
   const chatId = ctx.chat.id;
@@ -2809,7 +2559,7 @@ bot.action(/^srv_(.+)$/, async (ctx) => {
 
             await ctx.replyWithHTML(`<blockquote>✅ Panel ${cmd.toUpperCase()} berhasil dibuat!\n📤 Dikirim ke: ${targetId}\n🌐 Server: ${selectedServer.name || selectedServer.domain}</blockquote>`);
 
-            await ctx.telegram.sendPhoto(targetId, vsett.pp, {
+            await ctx.telegram.sendPhoto(targetId, vsett.pp_panel, {
               caption: `
 <blockquote>╔══════════════════════════════════╗
 ║   <b>✅ PANEL ${cmd.toUpperCase()} SUCCESS</b>   ║
@@ -3291,7 +3041,7 @@ bot.action(/^cadp_(.+)$/, async (ctx) => {
     // SET COOLDOWN
     setCooldown(userId, 'cadp');
 
-await ctx.telegram.sendPhoto(telegramId, vsett.pp, {
+await ctx.telegram.sendPhoto(telegramId, vsett.pp_adp, {
   caption: `</blockquote>╔══════════════════════════════════╗
 ║     <b>✅ ADMIN PANEL SUCCESS</b>      ║
 ╚══════════════════════════════════╝
