@@ -631,7 +631,7 @@ bot.action('create_panel', async (ctx) => {
 <blockquote>┏━━━━━━━━━━━━━━━━━━┓
 ┃ <b>💾 CREATE PANEL</b>
 ┣━━━━━━━━━━━━━━━━━━┛
-┗ /cpanel - Create Panel
+┗ /cpa - Create Panel
 
 ┏━━━━━━━━━━━━━━━━━━┓
 ┃ <b>👑 ADMIN PANEL</b>
@@ -680,33 +680,40 @@ bot.action('create_panel', async (ctx) => {
   await ctx.answerCbQuery();
 });
 bot.action('usage_info', async (ctx) => {
-    const chatId = ctx.chat.id;
+  const chatId = ctx.chat.id;
   const usageText = `<b>📖 CARA PAKAI</b>
-<blockquote expandable>↬ <b>Contoh Buat Panel:</b> 
-/ram nama <b>Kalau Buat Pribadi</b>
-/ram nama,idtelegram <b>Kalau Buat Kirim Ke buyer</b>
+<blockquote expandable>↬ <b>Contoh Buat Panel (Pribadi):</b> 
+/cpa nama
 
-↬ <b>Contoh Buat Admin Panel:</b> 
-/cadp nama <b>Kalau Buat Pribadi</b>
-/cadp nama,idtelegram <b>Kalau Buat Kirim Ke buyer</b>
+↬ <b>Contoh Buat Panel (Kirim ke buyer):</b> 
+/cpa nama,idtelegram
 
-↬ <b>Contoh Pembuatan Adp:</b> 
-/cadp nama,12345678
+↬ <b>Contoh Buat Admin Panel (Pribadi):</b> 
 /cadp nama
 
-↬ <b>Contoh Pembuatan Panel:</b> 
-/1gb nama,12345678
-/1gb nama
+↬ <b>Contoh Buat Admin Panel (Kirim ke buyer):</b> 
+/cadp nama,idtelegram
+
+━━━━━━━━━━━━━━━━━━━━
+<b>📌 Contoh Lengkap:</b>
+• /cpa panelku
+• /cpa panelku,12345678
+• /cadp adminku
+• /cadp adminku,12345678
+
+<b>⚠️ Cooldown 5 menit per pembuatan</b>
+<b>📌 Cek ID? Ketik /id lalu reply ke user</b>
 
 <b>Pahami Baik Baik Yaww</b>
 </blockquote>`;
+
   await ctx.deleteMessage();
 
   if (lastAudioMessageId) {
     try {
       await ctx.telegram.deleteMessage(chatId, lastAudioMessageId);
       console.log(`Audio ID ${lastAudioMessageId} dihapus`);
-      lastAudioMessageId = null;  // Reset ID audio
+      lastAudioMessageId = null;
     } catch (err) {
       console.log('Gagal hapus audio:', err.message);
     }
@@ -718,7 +725,7 @@ bot.action('usage_info', async (ctx) => {
       inline_keyboard: [
         [
           {
-            text: ' KEMBALI',
+            text: '🔙 KEMBALI',
             callback_data: 'create_panel',
             style: 'primary',
             icon_custom_emoji_id: '5311020286356236428'
@@ -904,7 +911,59 @@ bot.command('setcleanup', async (ctx) => {
 Auto cleanup akan berjalan setiap ${interval} menit.
   `);
 });
+// ========== COMMAND ID ==========
+bot.command('id', async (ctx) => {
+  const chatId = ctx.chat.id;
+  let targetMsg = ctx.message;
+  
+  // Cek apakah ada reply
+  if (ctx.message.reply_to_message) {
+    targetMsg = ctx.message.reply_to_message;
+  }
+  
+  const targetId = targetMsg.from.id;
+  const targetUsername = targetMsg.from.username || 'tidak ada';
+  const firstName = targetMsg.from.first_name || '';
+  const lastName = targetMsg.from.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  const isPremium = targetMsg.from.is_premium || false;
+  
+  // Cek DC ID (Data Center)
+  let dcId = 'N/A';
+  try {
+    // DC ID bisa didapat dari file atau API tertentu
+    // Ini estimasi berdasarkan ID
+    const idStr = targetId.toString();
+    if (idStr.startsWith('1') || idStr.startsWith('2') || idStr.startsWith('3')) dcId = 'DC 1 (Miami)';
+    else if (idStr.startsWith('4') || idStr.startsWith('5')) dcId = 'DC 2 (Amsterdam)';
+    else if (idStr.startsWith('6') || idStr.startsWith('7')) dcId = 'DC 3 (Miami)';
+    else if (idStr.startsWith('8') || idStr.startsWith('9')) dcId = 'DC 4 (Amsterdam)';
+    else if (idStr.startsWith('0')) dcId = 'DC 5 (Singapore)';
+  } catch (e) {
+    dcId = 'N/A';
+  }
+  
+  // Format response
+  const responseText = `
+╭━━━━━━━━━━━━━━━━━━━━╮
+┃   <b>🔍 CEK ID TELEGRAM</b>   
+╰━━━━━━━━━━━━━━━━━━━━╯
 
+<blockquote><b>👤 MENTION:</b> ${fullName || firstName || targetId}
+<b>🆔 ID KAMU:</b> <code>${targetId}</code>
+<b>🌐 USERNAME:</b> ${targetUsername ? '@' + targetUsername : '<i>tidak ada</i>'}
+<b>🏛️ DC ID:</b> ${dcId}
+<b>⭐ AKUN PREMIUM:</b> ${isPremium ? '✅ Ya (Telegram Premium)' : '❌ Tidak (Gratis)'}
+</blockquote>
+
+━━━━━━━━━━━━━━━━━━━━
+<i>CEK ID TELEGRAM BY BOT CREATE PANEL V2</i>
+`;
+
+  await ctx.replyWithHTML(responseText, {
+    reply_to_message_id: ctx.message.message_id
+  });
+});
 // ========== COMMAND: CEK SERVER PENUH ==========
 bot.command('cekpenuh', async (ctx) => {
   const fromId = ctx.from.id.toString();
@@ -2282,8 +2341,7 @@ bot.action('cancel_delall_server', async (ctx) => {
   await ctx.answerCbQuery();
 });
 
-// ========== COMMAND CPANEL ==========
-bot.command('cpanel', async (ctx) => {
+bot.command('cpa', async (ctx) => {
   const chatId = ctx.chat.id;
   const userId = ctx.from.id;
   const text = ctx.message.text.split(' ').slice(1).join(' ').trim();
@@ -2320,50 +2378,22 @@ bot.command('cpanel', async (ctx) => {
   
   if (!text) {
     return ctx.reply(`
-<b>📖 CARA PAKAI /cpanel</b>
+<b>📖 CARA PAKAI /cpa</b>
 
 <blockquote>
 Format 1 (kirim ke diri sendiri):
-/cpanel nama_panel
+/cpa nama_panel
 
 Format 2 (kirim ke orang lain):
-/cpanel nama_panel,idtelegram
+/cpa nama_panel,idtelegram
 
 Contoh:
-/cpanel panelku
-/cpanel panelku,12345678
+/cpa panelku
+/cpa panelku,12345678
 </blockquote>
 
-<b>⬇️ Pilih spesifikasi panel:</b>
-`, {
-      parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: '1 GB', callback_data: 'cpanel_select_1gb', style: 'primary' },
-            { text: '2 GB', callback_data: 'cpanel_select_2gb', style: 'primary' },
-            { text: '3 GB', callback_data: 'cpanel_select_3gb', style: 'primary' }
-          ],
-          [
-            { text: '4 GB', callback_data: 'cpanel_select_4gb', style: 'primary' },
-            { text: '5 GB', callback_data: 'cpanel_select_5gb', style: 'primary' },
-            { text: '6 GB', callback_data: 'cpanel_select_6gb', style: 'primary' }
-          ],
-          [
-            { text: '7 GB', callback_data: 'cpanel_select_7gb', style: 'primary' },
-            { text: '8 GB', callback_data: 'cpanel_select_8gb', style: 'primary' },
-            { text: '9 GB', callback_data: 'cpanel_select_9gb', style: 'primary' }
-          ],
-          [
-            { text: '10 GB', callback_data: 'cpanel_select_10gb', style: 'primary' },
-            { text: '📀 UNLIMITED', callback_data: 'cpanel_select_unli', style: 'primary' }
-          ],
-          [
-            { text: '❌ BATAL', callback_data: 'back_to_start', style: 'danger' }
-          ]
-        ]
-      }
-    });
+<b>⬇️ Ketik /cpa namapanel</b>
+`);
   }
 
   const parts = text.split(',');
@@ -2377,18 +2407,8 @@ Contoh:
 
   // SIMPAN SEMENTARA
   const tempId = generateTempId();
-  tempStorage.set(tempId, {
-    type: 'cpanel_waiting_ram',
-    username: username,
-    targetId: targetId,
-    userId: userId.toString()
-  });
   
-  setTimeout(() => {
-    tempStorage.delete(tempId);
-  }, 5 * 60 * 1000);
-
-  await ctx.reply(`
+  const msg = await ctx.reply(`
 <b>📦 PANEL: ${username}</b>
 📤 Target: <code>${targetId}</code>
 
@@ -2398,44 +2418,58 @@ Contoh:
     reply_markup: {
       inline_keyboard: [
         [
-          { text: '1 GB', callback_data: `cpanel_ram_${tempId}_1gb`, style: 'primary' },
-          { text: '2 GB', callback_data: `cpanel_ram_${tempId}_2gb`, style: 'primary' },
-          { text: '3 GB', callback_data: `cpanel_ram_${tempId}_3gb`, style: 'primary' }
+          { text: '1 GB', callback_data: `cpa_ram_${tempId}_1gb`, style: 'primary' },
+          { text: '2 GB', callback_data: `cpa_ram_${tempId}_2gb`, style: 'primary' },
+          { text: '3 GB', callback_data: `cpa_ram_${tempId}_3gb`, style: 'primary' }
         ],
         [
-          { text: '4 GB', callback_data: `cpanel_ram_${tempId}_4gb`, style: 'primary' },
-          { text: '5 GB', callback_data: `cpanel_ram_${tempId}_5gb`, style: 'primary' },
-          { text: '6 GB', callback_data: `cpanel_ram_${tempId}_6gb`, style: 'primary' }
+          { text: '4 GB', callback_data: `cpa_ram_${tempId}_4gb`, style: 'primary' },
+          { text: '5 GB', callback_data: `cpa_ram_${tempId}_5gb`, style: 'primary' },
+          { text: '6 GB', callback_data: `cpa_ram_${tempId}_6gb`, style: 'primary' }
         ],
         [
-          { text: '7 GB', callback_data: `cpanel_ram_${tempId}_7gb`, style: 'primary' },
-          { text: '8 GB', callback_data: `cpanel_ram_${tempId}_8gb`, style: 'primary' },
-          { text: '9 GB', callback_data: `cpanel_ram_${tempId}_9gb`, style: 'primary' }
+          { text: '7 GB', callback_data: `cpa_ram_${tempId}_7gb`, style: 'primary' },
+          { text: '8 GB', callback_data: `cpa_ram_${tempId}_8gb`, style: 'primary' },
+          { text: '9 GB', callback_data: `cpa_ram_${tempId}_9gb`, style: 'primary' }
         ],
         [
-          { text: '10 GB', callback_data: `cpanel_ram_${tempId}_10gb`, style: 'primary' },
-          { text: '📀 UNLIMITED', callback_data: `cpanel_ram_${tempId}_unli`, style: 'primary'}
+          { text: '10 GB', callback_data: `cpa_ram_${tempId}_10gb`, style: 'primary' },
+          { text: 'UNLIMITED', callback_data: `cpa_ram_${tempId}_unli`, style: 'primary' }
         ],
         [
-          { text: '❌ BATAL', callback_data: `cancel_cpanel_${tempId}`, style: 'danger'}
+          { text: '❌ BATAL', callback_data: `cancel_cpa_${tempId}`, style: 'danger' }
         ]
       ]
     }
   });
+
+  tempStorage.set(tempId, {
+    type: 'cpa_waiting_ram',
+    username: username,
+    targetId: targetId,
+    userId: userId.toString(),
+    messageId: msg.message_id,
+    chatId: chatId
+  });
+  
+  setTimeout(() => {
+    tempStorage.delete(tempId);
+  }, 5 * 60 * 1000);
 });
 
-// ========== HANDLE PILIH RAM CPANEL ==========
-bot.action(/^cpanel_ram_(.+)_(.+)$/, async (ctx) => {
+// ========== HANDLE PILIH RAM cpa ==========
+bot.action(/^cpa_ram_(.+)_(.+)$/, async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});
   
   const tempId = ctx.match[1];
   const cmd = ctx.match[2];
   const userId = ctx.from.id.toString();
+  const chatId = ctx.chat.id;
   
   const data = tempStorage.get(tempId);
   
   if (!data) {
-    await ctx.answerCbQuery('❌ Session expired! Ulangi /cpanel', { alert: true });
+    await ctx.answerCbQuery('❌ Session expired! Ulangi /cpa', { alert: true });
     return;
   }
   
@@ -2444,8 +2478,15 @@ bot.action(/^cpanel_ram_(.+)_(.+)$/, async (ctx) => {
     return;
   }
   
-  if (data.type !== 'cpanel_waiting_ram') {
+  if (data.type !== 'cpa_waiting_ram') {
     return;
+  }
+  
+  // ✅ HAPUS PESAN TOMBOL
+  try {
+    await ctx.telegram.deleteMessage(chatId, data.messageId);
+  } catch (err) {
+    console.log('Gagal hapus pesan tombol:', err.message);
   }
   
   tempStorage.delete(tempId);
@@ -2462,40 +2503,34 @@ Tunggu <b>${cooldownCheck.minutesLeft} menit</b> lagi.</blockquote>
   }
   
   // LANJUT KE PROSES CREATE PANEL
-  await prosesCreatePanel(ctx, cmd, username, targetId, userId, ctx.chat.id);
+  await prosesCreatePanel(ctx, cmd, username, targetId, userId, chatId);
 });
 
-// ========== HANDLE CPANEL SELECT DARI MENU AWAL ==========
-bot.action(/^cpanel_select_(.+)$/, async (ctx) => {
-  const cmd = ctx.match[1];
-  
-  await ctx.reply(`
-<b>📦 CREATE PANEL ${cmd.toUpperCase()}</b>
-
-Kirim perintah:
-<code>/cpanel namapanel</code>
-
-Atau kirim ke orang lain:
-<code>/cpanel namapanel,idtelegram</code>
-`, { parse_mode: 'HTML' });
-  
-  await ctx.answerCbQuery();
-});
-
-// ========== HANDLE BATAL CPANEL ==========
-bot.action(/^cancel_cpanel_(.+)$/, async (ctx) => {
+// ========== HANDLE BATAL cpa ==========
+bot.action(/^cancel_cpa_(.+)$/, async (ctx) => {
   const tempId = ctx.match[1];
   const userId = ctx.from.id.toString();
+  const chatId = ctx.chat.id;
   
   const data = tempStorage.get(tempId);
   
   if (data && data.userId === userId) {
+    // ✅ HAPUS PESAN TOMBOL
+    try {
+      await ctx.telegram.deleteMessage(chatId, data.messageId);
+    } catch (err) {
+      console.log('Gagal hapus pesan tombol:', err.message);
+    }
+    
     tempStorage.delete(tempId);
-    await ctx.editMessageText('<blockquote>❌ Pembuatan panel dibatalkan.</blockquote>', { parse_mode: 'HTML' });
+    
+    // Kirim pesan konfirmasi (opsional)
+    await ctx.reply('<blockquote>❌ Pembuatan panel dibatalkan.</blockquote>', { parse_mode: 'HTML' });
   }
   
   await ctx.answerCbQuery();
 });
+
 
 // ========== FUNGSI PROSES CREATE PANEL ==========
 async function prosesCreatePanel(ctx, cmd, username, targetId, userId, chatId) {
