@@ -380,7 +380,7 @@ function updateCommandStats() {
         else if (cmd.match(/^(cleanup|cekpenuh|setcleanup|refreshcmds)$/)) {
           commands.cleanup.push(cmd);
         }
-        else if (cmd.match(/^(1gb|2gb|3gb|4gb|5gb|6gb|7gb|8gb|9gb|10gb|unli|cadp)$/)) {
+        else if (cmd.match(/^(cpa|cadp)$/)) {
           commands.panel.push(cmd);
         }
       }
@@ -401,7 +401,7 @@ function updateCommandStats() {
       'listsrv', 'delsrv', 'listusr', 'delusr', 'cekserver'
     ];
     commands.cleanup = ['cleanup', 'cekpenuh', 'setcleanup', 'refreshcmds'];
-    commands.panel = ['1gb', '2gb', '3gb', '4gb', '5gb', '6gb', '7gb', '8gb', '9gb', '10gb', 'unli', 'cadp'];
+    commands.panel = ['cpa', 'cadp'];
   }
   
   // Hitung total
@@ -465,6 +465,7 @@ bot.start(async (ctx) => {
 ┏━━━━━━━━━━━━━━━━━━┓
 ┃  <b>/info</b> - Detail Info  
 ┃  <b>/ping</b> - Cek Status Bot
+┃  <b>/id</b> - Cek Id Tele
 ┗━━━━━━━━━━━━━━━━━━┛
 
 <b>⬇️ PILIH MENU DI BAWAH ⬇️</b>
@@ -949,12 +950,11 @@ bot.command('id', async (ctx) => {
 ┃   <b>🔍 CEK ID TELEGRAM</b>   
 ╰━━━━━━━━━━━━━━━━━━━━╯
 
-<blockquote><b>👤 MENTION:</b> ${fullName || firstName || targetId}
+<b>👤 MENTION:</b> ${fullName || firstName || targetId}
 <b>🆔 ID KAMU:</b> <code>${targetId}</code>
 <b>🌐 USERNAME:</b> ${targetUsername ? '@' + targetUsername : '<i>tidak ada</i>'}
-<b>🏛️ DC ID:</b> ${dcId}
+<b>🏛️ DC ID:</b N/A
 <b>⭐ AKUN PREMIUM:</b> ${isPremium ? '✅ Ya (Telegram Premium)' : '❌ Tidak (Gratis)'}
-</blockquote>
 
 ━━━━━━━━━━━━━━━━━━━━
 <i>CEK ID TELEGRAM BY BOT CREATE PANEL V2</i>
@@ -2376,25 +2376,21 @@ bot.command('cpa', async (ctx) => {
   // PARSE INPUT
   let username, targetId;
   
-  if (!text) {
-    return ctx.reply(`
-<b>📖 CARA PAKAI /cpa</b>
+if (!text) {
+    return ctx.replyWithHTML(`<blockquote><b>FORMAT SALAH!! SILAHKAN DI LIHAT FORMAT YANG BENAR DI BAWAH⬇️</b>
 
-<blockquote>
-Format 1 (kirim ke diri sendiri):
+<b>📌 FORMAT 1 (Kirim ke diri sendiri)</b>
 /cpa nama_panel
 
-Format 2 (kirim ke orang lain):
+<b>📌 FORMAT 2 (Kirim ke orang lain)</b>
 /cpa nama_panel,idtelegram
 
-Contoh:
-/cpa panelku
-/cpa panelku,12345678
+<b>📌 CONTOH</b>
+• /cpa panelku
+• /cpa panelku,12345678
 </blockquote>
-
-<b>⬇️ Ketik /cpa namapanel</b>
 `);
-  }
+}
 
   const parts = text.split(',');
   username = parts[0].trim();
@@ -2826,11 +2822,10 @@ bot.action(/^srv_(.+)$/, async (ctx) => {
 
             await ctx.telegram.sendPhoto(targetId, vsett.pp, {
               caption: `
-╔══════════════════════════════════╗
+<blockquote>╔══════════════════════════════════╗
 ║   <b>✅ PANEL ${cmd.toUpperCase()} SUCCESS</b>   ║
 ╚══════════════════════════════════╝
 
-<blockquote>
 <b>👤 INFORMASI AKUN</b>
 ├─ <b>Username</b> : <code>${user.username}</code>
 ├─ <b>User ID</b>   : <code>${user.id}</code>
@@ -2862,7 +2857,7 @@ bot.action(/^srv_(.+)$/, async (ctx) => {
                 inline_keyboard: [
                   [
                     { text: '🌐 LOGIN PANEL', url: selectedServer.domain },
-                    { text: '📋 COPY PASSWORD', copy_text: { text: password } }
+                    { text: 'COPY PASSWORD', copy_text: { text: password } }
                   ],
                   [
                     { text: '💬 SUPPORT', url: 'https://t.me/akuzyura' }
