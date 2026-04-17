@@ -914,55 +914,44 @@ Auto cleanup akan berjalan setiap ${interval} menit.
 });
 // ========== COMMAND ID ==========
 bot.command('id', async (ctx) => {
-  const chatId = ctx.chat.id;
-  let targetMsg = ctx.message;
-  
-  // Cek apakah ada reply
-  if (ctx.message.reply_to_message) {
-    targetMsg = ctx.message.reply_to_message;
-  }
-  
-  const targetId = targetMsg.from.id;
-  const targetUsername = targetMsg.from.username || 'tidak ada';
-  const firstName = targetMsg.from.first_name || '';
-  const lastName = targetMsg.from.last_name || '';
-  const fullName = `${firstName} ${lastName}`.trim();
-  const isPremium = targetMsg.from.is_premium || false;
-  
-  // Cek DC ID (Data Center)
-  let dcId = 'N/A';
   try {
-    // DC ID bisa didapat dari file atau API tertentu
-    // Ini estimasi berdasarkan ID
-    const idStr = targetId.toString();
-    if (idStr.startsWith('1') || idStr.startsWith('2') || idStr.startsWith('3')) dcId = 'DC 1 (Miami)';
-    else if (idStr.startsWith('4') || idStr.startsWith('5')) dcId = 'DC 2 (Amsterdam)';
-    else if (idStr.startsWith('6') || idStr.startsWith('7')) dcId = 'DC 3 (Miami)';
-    else if (idStr.startsWith('8') || idStr.startsWith('9')) dcId = 'DC 4 (Amsterdam)';
-    else if (idStr.startsWith('0')) dcId = 'DC 5 (Singapore)';
-  } catch (e) {
-    dcId = 'N/A';
-  }
-  
-  // Format response
-  const responseText = `
+    let targetMsg = ctx.message;
+    
+    // Cek apakah ada reply
+    if (ctx.message.reply_to_message) {
+      targetMsg = ctx.message.reply_to_message;
+    }
+    
+    const from = targetMsg.from;
+    const firstName = from.first_name || '';
+    const lastName = from.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    const targetId = from.id;
+    const targetUsername = from.username || 'tidak ada';
+    const isPremium = from.is_premium || false;
+    
+    // Format response
+    const responseText = `
 ╭━━━━━━━━━━━━━━━━━━━━╮
 ┃   <b>🔍 CEK ID TELEGRAM</b>   
 ╰━━━━━━━━━━━━━━━━━━━━╯
 
-<b>👤 MENTION:</b> ${fullName || firstName || targetId}
-<b>🆔 ID KAMU:</b> <code>${targetId}</code>
-<b>🌐 USERNAME:</b> ${targetUsername ? '@' + targetUsername : '<i>tidak ada</i>'}
-<b>🏛️ DC ID:</b N/A
-<b>⭐ AKUN PREMIUM:</b> ${isPremium ? '✅ Ya (Telegram Premium)' : '❌ Tidak (Gratis)'}
+<b>👤 NAMA:</b> ${fullName || firstName || targetId}
+<b>🆔 ID:</b> <code>${targetId}</code>
+<b>🌐 USERNAME:</b> ${targetUsername !== 'tidak ada' ? '@' + targetUsername : '<i>tidak ada</i>'}
+<b>⭐ PREMIUM:</b> ${isPremium ? '✅ Ya (Telegram Premium)' : '❌ Tidak (Gratis)'}
 
 ━━━━━━━━━━━━━━━━━━━━
 <i>CEK ID TELEGRAM BY BOT CREATE PANEL V2</i>
 `;
 
-  await ctx.replyWithHTML(responseText, {
-    reply_to_message_id: ctx.message.message_id
-  });
+    await ctx.replyWithHTML(responseText, {
+      reply_to_message_id: ctx.message.message_id
+    });
+  } catch (error) {
+    console.error('Error di command id:', error);
+    await ctx.reply('❌ Terjadi kesalahan, coba lagi nanti.');
+  }
 });
 // ========== COMMAND: CEK SERVER PENUH ==========
 bot.command('cekpenuh', async (ctx) => {
