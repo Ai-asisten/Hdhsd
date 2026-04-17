@@ -2557,15 +2557,36 @@ bot.action(/^srv_(.+)$/, async (ctx) => {
               await ctx.deleteMessage();
             } catch {}
 
-            await ctx.replyWithHTML(`<blockquote>✅ Panel ${cmd.toUpperCase()} berhasil dibuat!\n📤 Dikirim ke: ${targetId}\n🌐 Server: ${selectedServer.name || selectedServer.domain}</blockquote>`);
+await ctx.replyWithHTML(`
+<blockquote>✅ <b>Panel ${cmd.toUpperCase()} sukses dibuat</b>
 
+├─ 📤 Target: <code>${targetId}</code>
+├─ 🖥️ Server: ${selectedServer.name || selectedServer.domain}
+╰─ 🥚 Egg: ${eggData.eggId}
+</blockquote>
+`);
+
+// Kirim notifikasi ke owner
+try {
+  await ctx.telegram.sendMessage(vsett.adminId, `
+<blockquote><b>📢 ADA PANEL BARU</b>
+
+👤 <b>Creator:</b> @${ctx.from.username} (<code>${ctx.from.id}</code>)
+📦 <b>Panel:</b> ${cmd.toUpperCase()}
+📤 <b>Target:</b> <code>${targetId}</code>
+🖥️ <b>Server:</b> ${selectedServer.name || selectedServer.domain}
+🥚 <b>Egg:</b> ${eggData.eggId}
+
+━━━━━━━━━━━━━━━━━━━━
+✅ Status: Berhasil
+</blockquote>
+`, { parse_mode: 'HTML' });
+} catch (err) {
+  console.log('Gagal kirim notif ke owner:', err.message);
+}
             await ctx.telegram.sendPhoto(targetId, vsett.pp_panel, {
               caption: `
-<blockquote>╔══════════════════════════════════╗
-║   <b>✅ PANEL ${cmd.toUpperCase()} SUCCESS</b>   ║
-╚══════════════════════════════════╝
-
-<b>👤 INFORMASI AKUN</b>
+<blockquote><b>👤 INFORMASI AKUN</b>
 ├─ <b>Username</b> : <code>${user.username}</code>
 ├─ <b>User ID</b>   : <code>${user.id}</code>
 ╰─ <b>Server</b>    : <code>${selectedServer.name || selectedServer.domain}</code>
@@ -2586,10 +2607,9 @@ bot.action(/^srv_(.+)$/, async (ctx) => {
 ├─ No DDOS / Abuse
 ├─ No Share / Free
 ╰─ Simpan Data Akun
-</blockquote>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-<i>✨ Selamat menggunakan Panel ${cmd.toUpperCase()}! ✨</i>
+<i>✨ Selamat menggunakan Panel ${cmd.toUpperCase()}! ✨</i></blockquote>
 `,
               parse_mode: 'HTML',
               reply_markup: {
@@ -3042,11 +3062,7 @@ bot.action(/^cadp_(.+)$/, async (ctx) => {
     setCooldown(userId, 'cadp');
 
 await ctx.telegram.sendPhoto(telegramId, vsett.pp_adp, {
-  caption: `</blockquote>╔══════════════════════════════════╗
-║     <b>✅ ADMIN PANEL SUCCESS</b>      ║
-╚══════════════════════════════════╝
-
-<b>🔐 INFORMASI AKUN</b>
+  caption: `</blockquote><b>🔐 INFORMASI AKUN</b>
 ├─ <b>Username</b> : <code>${user.username}</code>
 ├─ <b>User ID</b>   : <code>${user.id}</code>
 ${eggData ? `├─ <b>Egg ID</b>    : <code>${eggData.eggId}</code>` : ''}
@@ -3088,14 +3104,30 @@ ${eggData ? `├─ <b>Egg ID</b>    : <code>${eggData.eggId}</code>` : ''}
     ]
   }
 });
-    // KONFIRMASI KE GRUP
-    await ctx.replyWithHTML(`
-<blockquote>✅ <b>Berhasil kirim Admin panel ke ${telegramId}</b>
-🌐 <b>Server:</b> ${selectedServer.name || selectedServer.domain}
-${eggData ? `🥚 <b>Egg:</b> ${eggData.eggId}` : ''}
+await ctx.replyWithHTML(`
+<blockquote>✅ <b>Admin panel berhasil dikirim</b>
 
-⏱️ <b>Cooldown 5 menit</b></blockquote>
-    `);
+├─ 📤 Target: <code>${telegramId}</code>
+╰─ 🖥️ Server: ${selectedServer.name || selectedServer.domain}
+</blockquote>
+`);
+
+// Kirim notifikasi ke owner
+try {
+  await ctx.telegram.sendMessage(vsett.adminId, `
+<blockquote><b>📢 ADMIN PANEL BARU</b>
+
+👤 <b>Creator:</b> @${ctx.from.username} (<code>${ctx.from.id}</code>)
+📤 <b>Target:</b> <code>${telegramId}</code>
+🖥️ <b>Server:</b> ${selectedServer.name || selectedServer.domain}
+
+━━━━━━━━━━━━━━━━━━━━
+✅ Status: Berhasil dikirim
+</blockquote>
+`, { parse_mode: 'HTML' });
+} catch (err) {
+  console.log('Gagal kirim notif ke owner:', err.message);
+}
 
   } catch (error) {
     console.error('Error CADP:', error);
